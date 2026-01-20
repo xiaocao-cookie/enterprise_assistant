@@ -65,7 +65,34 @@ sudo docker run -d \
   -p 5432:5432 \
   postgres:18.1-bookworm
 ```
+2. Redis
+```bash
+sudo docker run --name some-redis \
+      -d -p 6379:6379 \
+      redis:7 redis-server\
+      --save 60 1 \
+      --loglevel warning 
+```
 
+3. RabbitMQ
+```bash
+sudo docker run -d --name rmq \
+      -p 5672:5672 \
+      -p 15672:15672 \
+      -e RABBITMQ_DEFAULT_USER=peter \
+      -e RABBITMQ_DEFAULT_PASS=123456 \
+      rabbitmq:4.2-management 
+```
+
+4. ES
+```bash
+sudo docker run -d --name es01 \
+      -p 9200:9200 \
+      -e "discovery.type=single-node" \
+      -e "xpack.security.enabled=false" \
+      -e "ES_JAVA_OPTS=-Xms512m -Xmx512m" \
+      docker.elastic.co/elasticsearch/elasticsearch:9.2.3 
+```
 
 ## 二、技术栈
 | 分类 | 技术           |
@@ -75,3 +102,15 @@ sudo docker run -d \
 | 向量库 | Qdrant / Chroma |
 | 模型 | 待定...        |
 | 部署 | Docker       |
+
+
+## 三、启动的服务
+1. Celery
+```bash
+celery -A app.celery_app:celery_app worker -l info -Q audio -c
+```
+
+2. FastAPI
+```bash
+uvicorn app.main: app --reload --port 8002 
+```

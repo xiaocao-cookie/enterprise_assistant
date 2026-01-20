@@ -1,9 +1,11 @@
+from __future__ import annotations
 from typing import Any, Generic, TypeVar
 
 from pydantic import BaseModel, ConfigDict
 
 T = TypeVar("T")
 
+# todo: 文档补充
 class Meta(BaseModel):
     """  """
     model_config = ConfigDict(extra="allow")
