@@ -1,0 +1,109 @@
+from __future__ import annotations
+
+from pydantic import Field, model_validator
+from pydantic_settings import BaseSettings, SettingsConfigDict
+
+from app.core.enums import Env, JwtAlg
+from app.core.security_defaults import (
+    DEFAULT_REFERRER_POLICY,
+    DEFAULT_PERMISSIONS_POLICY,
+    DEFAULT_HSTS_MAX_AGE,
+    DEFAULT_X_FRAME_OPTIONS
+)
+
+
+class Settings(BaseSettings):
+    """ 项目的配置信息 """
+    # 基础配置
+    model_config = SettingsConfigDict(env_file="/home/supercao/PycharmProjects/enterprise_assistant/.env",
+                                      env_file_encoding="utf-8")
+    env: Env = Field(default=Env.dev, alias="ENV")
+    app_name: str = Field(default="enterprise_assistant", alias="APP_NAME")
+    log_level: str = Field(default="INFO", alias="LOG_LEVEL")
+
+    # url
+    database_url: str = Field(..., alias="DATABASE_URL")
+    redis_url: str = Field(..., alias="REDIS_URL")
+    rabbitmq_url: str = Field(..., alias="RABBITMQ_URL")
+
+    # celery
+    celery_result_backend: str = Field(default="redis://127.0.0.1:6379/1", alias="CELERY_RESULT_BACKEND")
+    celery_task_always_eager: bool = Field(default=False, alias="CELERY_TASK_ALWAYS_EAGER")
+
+    # es
+    elasticsearch_url: str = Field(default="http://127.0.0.1:9200", alias="ELASTICSEARCH_URL")
+    elasticsearch_username: str | None = Field(default=None, alias="ELASTICSEARCH_USERNAME")
+    elasticsearch_password: str | None = Field(default=None, alias="ELASTICSEARCH_PASSWORD")
+    elasticsearch_verify_certs: bool = Field(default=False, alias="ELASTICSEARCH_VERIFY_CERTS")
+
+    # 数据库
+    db_pool_size: int = Field(default=10, alias="DB_POLL_SIZE")
+    db_max_overflow: int = Field(default=20, alias="DB_MAX_OVERFLOW")
+    db_pool_recycle: int = Field(default=1800, alias="DB_POOL_RECYCLE")
+    db_pool_timeout: int = Field(default=30, alias="DB_POOL_TIMEOUT")
+
+    # redis
+    redis_max_connections: int = Field(default=50, alias="REDIS_MAX_CONNECTIONS")
+    redis_socket_connect_timeout: int = Field(default=2, alias="REDIS_SOCKET_CONNECT_TIMEOUT")
+    redis_socket_timeout: int = Field(default=2, alias="REDIS_SOCKET_TIMEOUT")
+    redis_health_check_interval: int = Field(default=30, alias="REDIS_HEALTH_CHECK_INTERVAL")
+
+    # JWT 鉴权
+    jwt_secret: str = Field(..., alias="JWT_SECRET")
+    jwt_issuer: str = Field(default="enterprise_assistant", alias="JWT_ISSUER")
+    jwt_alg: JwtAlg = Field(default=JwtAlg.HS256, alias="JWT_ALG")
+    access_token_expire_minutes: int = Field(default=30, alias="ACCESS_TOKEN_EXPIRE_MINUTES")
+    refresh_token_expire_days: int = Field(default=14, alias="REFRESH_TOKEN_EXPIRE_DAYS")
+    auto_sync_authz: bool = Field(default=True, alias="AUTO_SYNC_AUTHZ")            # authz: Authorization, 授权
+
+    # HTTP连接安全
+    security_headers_enabled: bool = Field(default=True, alias="SECURITY_HEADERS_ENABLED")
+    csp: str | None = Field(default=None, alias="CSP")                  # todo: 这个字段的含义是什么
+    security_hsts_enabled: bool = Field(default=False, alias="SECURITY_HSTS_ENABLED")
+    security_hsts_max_age: int = Field(default=DEFAULT_HSTS_MAX_AGE, alias="SECURITY_HSTS_MAX_AGE")
+    security_hsts_include_subdomains: bool = Field(default=True, alias="SECURITY_HSTS_INCLUDE_SUBDOMAINS")
+    security_hsts_preload: bool = Field(default=False, alias="SECURITY_HSTS_PRELOAD")
+    security_x_frame_options: str = Field(default=DEFAULT_X_FRAME_OPTIONS, alias="SECURITY_X_FRAME_OPTIONS")
+    security_referrer_policy: str = Field(default=DEFAULT_REFERRER_POLICY, alias="SECURITY_REFERRER_POLICY")
+    security_permissions_policy: str = Field(default=DEFAULT_PERMISSIONS_POLICY, alias="SECURITY_PERMISSIONS_POLICY")
+
+    # 跨域请求
+    cors_allow_origins: str = Field(default="*", alias="CORS_ALLOW_ORIGINS")
+    cors_allow_credentials: bool = Field(default=False, alias="CORS_ALLOW_CREDENTIALS")
+    cors_allow_methods: str = Field(default="GET,POST,PUT,PATCH,DELETE,OPTIONS", alias="CORS_ALLOW_METHODS")
+    cors_allow_headers: str = Field(default="Authorization,Content-Type,X-Request-Id", alias="CORS_ALLOW_HEADERS")
+
+    # 接口限流
+    rate_limit_enabled: bool = Field(default=True, alias="RATE_LIMIT_ENABLED")
+    auth_rate_limit_per_window: int = Field(default=20, alias="AUTH_RATE_LIMIT_PER_WINDOW")
+    auth_rate_limit_window_seconds: int = Field(default=60, alias="AUTH_RATE_LIMIT_WINDOW_SECONDS")
+
+    @model_validator(mode="after")
+    def _validate_cors(self) -> "Settings":
+        """ 验证跨域请求的合法性 """
+        if (self.cors_allow_origins or "").strip() == "*" and bool(self.cors_allow_credentials):
+            raise ValueError("CORS_ALLOW_CREDENTIALS cannot be true when CORS_ALLOW_ORIGINS is '*'.")
+
+        return self
+
+    @staticmethod
+    def _csv(s: str) -> list[str]:
+        """ 将字符串 s 按逗号分割，并将分割的每一段放入列表中 """
+        s = (s or "").strip()
+        if not s:
+            return []
+        return [x.strip() for x in s.split(",") if x.strip()]
+
+    def cors_origins_list(self) -> list[str]:
+        if (self.cors_allow_origins or "").strip() == "*":
+            return ["*"]
+        return self._csv(self.cors_allow_origins)
+
+    def cors_methods_list(self) -> list[str]:
+        return self._csv(self.cors_allow_methods) or ["*"]
+
+    def cors_headers_list(self) -> list[str]:
+        return self._csv(self.cors_allow_headers) or ["*"]
+
+
+settings = Settings()
