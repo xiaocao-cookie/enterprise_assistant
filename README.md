@@ -20,38 +20,66 @@ app/
 │   ├── security_defaults.py  	        # 安全头默认值，比如HSTS/XFO/Referrer等
 │   └── config.py
 ├── infra/  			            # 基础设施层，主要是外部依赖客户端连接
-│   ├── db.py 	
+│   ├── db/
+│   │   ├── base.py
+│   │   ├── engine.py
+│   │   ├── session.py
+│   │   └── deps.py 	
 │   ├── redis_client.py	
-│   └── elasticsearch_client.py	
-├── celery_app.py		            # Celery应用入口
-├── tasks/  			            # Celery任务集合
-│   └── example.py
-├── models/  			            # ORM基础与统一导出
-│   ├── base.py  		                # Declarative Base（所有模型的基类）
-│   └── __init__.py  		            # 聚合导入模型
+│   ├── elasticsearch_client.py	
+│   └── celery/
+│       └── celery_app.py           # Celery应用入口		            
 ├── audit/ 
 │   ├── models.py 
 │   ├── context.py  		            # 审计事件缓冲区ContextVar
 │   ├── middleware.py  		            # init/flush请求结束批量写入audit_events
 │   └── service.py  		            # record()写入审计事件到缓冲区并脱敏meta
-├── web/  	
+├── api/  	
 │   ├── routes_consts.py  	        # 路由相关常量
+│   ├── response.py
 │   ├── exception_handlers.py  	    # 全局异常，然后统一错误
 │   ├── openapi.py  		        # OpenAPI增强，主要是统一错误响应与响应头
 │   ├── health.py  		            # 健康检查
 │   ├── startup_checks.py  	        # 启动自检
 │   └── middleware/  		        # Web中间件集合
 │       ├── real_ip.py  	            # 解析真实客户端IP
-│       ├── middleware.py  	            # RequestContext：rid/耗时/ctx + audit flush
+│       ├── request_context.py
 │       ├── cors.py  		            # CORS安装封装
 │       ├── security_headers.py         # 安全响应头中间件
 │       └── rate_limit.py  	            # 基于Redis的固定窗口IP限流依赖
-├── auth/	
-│   └── models.py  		                # User/Role/Permission/UserRoleGrant等ORM，这里为后面的authz和n使用
-└── resources/
-    └── models.py  		                # 资源域模型，主要是权限部分用的资源，写好这里workspace/project/resource目录）
+├── modules/
+│   ├── audit/
+│   │   ├── context.py
+│   │   ├── models.py
+│   │   ├── service.py
+│   │   └── middleware.py
+│   ├── security/
+│   │   ├── password.py
+│   │   ├── jwt_claims.py
+│   │   └── jwt.py
+│   ├── auth/
+│   │   └── models.py
+│   ├── resources/
+│   │   └── models.py
+│   ├── authz/
+│   │   ├── consts.py
+│   │   ├── scope_keys.py
+│   │   ├── seed.py
+│   │   ├── seed_sync.py
+│   │   ├── service.py
+│   │   └── deps.py
+│   ├── authn/
+│   │   ├── consts.py
+│   │   ├── schemas.py
+│   │   ├── service.py
+│   │   ├── deps.py
+│   │   └── routes.py
+│   ├── admin/
+│   │   ├── schemas.py
+│   │   └── routes.py
+│   └── tasks/
+│       └── example.py
 ```
-
 
 
 

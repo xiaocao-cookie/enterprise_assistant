@@ -1,0 +1,13 @@
+from __future__ import annotations
+
+from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, async_sessionmaker
+
+
+def create_session_maker(engine: AsyncEngine) -> async_sessionmaker[AsyncSession]:
+    """
+
+
+    :param engine:
+    :return:
+    """
+    return async_sessionmaker(engine, expire_on_commit=False, class_=AsyncSession)
