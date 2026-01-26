@@ -58,7 +58,7 @@ class Settings(BaseSettings):
 
     # HTTP连接安全
     security_headers_enabled: bool = Field(default=True, alias="SECURITY_HEADERS_ENABLED")
-    csp: str | None = Field(default=None, alias="CSP")                  # todo: 这个字段的含义是什么
+    csp: str | None = Field(default=None, alias="CSP")                          # Content Security Policy, 用于缓存和安全策略
     security_hsts_enabled: bool = Field(default=False, alias="SECURITY_HSTS_ENABLED")
     security_hsts_max_age: int = Field(default=DEFAULT_HSTS_MAX_AGE, alias="SECURITY_HSTS_MAX_AGE")
     security_hsts_include_subdomains: bool = Field(default=True, alias="SECURITY_HSTS_INCLUDE_SUBDOMAINS")

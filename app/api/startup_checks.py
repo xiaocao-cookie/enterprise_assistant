@@ -1,0 +1,53 @@
+import logging
+
+from sqlalchemy import text
+
+from app.core.config import settings
+from app.core.enums import Env
+
+
+logger = logging.getLogger(__name__)
+
+
+def _is_prod() -> bool:
+    """
+    检测当前运行的环境是不是生产环境
+    """
+    return settings.env in {Env.prod, Env.production}
+
+
+async def run_startup_checks(app) -> None:
+    """
+    为 FastAPI app 启动开机自检，
+    其中，检测内容包括：
+        1. JWT 私钥的强度与合法性
+        2. 跨域请求的合法性
+        3. redis, db 和 es 服务运行是否正常
+
+    :param app: FastAPI 的应用
+    """
+    prod = _is_prod()
+
+    if not settings.jwt_secret or len(settings.jwt_secret) < 32:
+        msg = "weak_jwt_secret"
+        extra = {"min_len": 32, "env": str(settings.env)}
+        if prod:
+            raise RuntimeError(f"{msg}: {extra}")
+        logger.warning(msg, extra=extra)
+
+    if settings.cors_allow_credentials and (settings.cors_allow_origins or "").strip() == "*":      # todo: 测试环境全开，线上需收紧
+        msg = "cors_invalid_credentials_with_wildcard_origin"
+        extra = {"env": str(settings.env)}
+        if prod:
+            raise RuntimeError(f"{msg}: {extra}")
+        logger.warning(msg, extra=extra)
+
+    await app.state.redis.ping()
+
+    session_maker = app.state.db_session_maker
+    async with session_maker() as session:
+        await session.execute(text("SELECT 1"))
+
+    ok = await app.state.es.ping()
+    if not ok:
+        raise RuntimeError("elasticsearch_ping_failed")

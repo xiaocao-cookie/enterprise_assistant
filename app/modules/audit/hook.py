@@ -10,6 +10,7 @@ _resolved_record: bool = False
 _resolved_mw: bool = False
 
 
+# todo: 文档注释
 def _resolve_record() -> Callable[..., Any] | None:
     global _record_impl, _resolved_record
     if _resolved_record:
@@ -21,6 +22,7 @@ def _resolve_record() -> Callable[..., Any] | None:
     except Exception:
         _record_impl = None
     return _record_impl
+
 
 def record(
     *,
@@ -34,6 +36,20 @@ def record(
     meta: Any | None = None,
     error_code: str | None = None,
 ) -> None:
+    """
+    记录异常信息
+
+    :param action: 触发异常的动作，或者说编码是什么
+    :param status: 异常的状态码 error/deny
+    :param http_status: HTTP 的状态码
+    :param scope_key: 作用域标识
+    :param resource_type:
+    :param resource_ref_id:
+    :param actor_user_id:
+    :param meta: 元数据
+    :param error_code: 自定义的异常编码
+    :return:
+    """
     impl = _resolve_record()
     if impl is None:
         return

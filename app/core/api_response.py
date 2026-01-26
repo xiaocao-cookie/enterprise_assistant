@@ -6,10 +6,9 @@ from pydantic import BaseModel
 from app.core.api_schemas import Meta
 
 
-# todo: 文档补充
 def ok(data: Any, meta: dict[str, Any] | Meta | None = None) -> dict:
     """
-    函数成功后返回的数据
+    调用 API 接口成功后返回的响应
 
     :param data: 数据
     :param meta: 元数据

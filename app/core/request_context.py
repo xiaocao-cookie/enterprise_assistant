@@ -2,7 +2,14 @@ from __future__ import annotations
 
 from contextvars import ContextVar
 
-# todo: 什么是 ContextVar, HTTP 的请求和响应格式
+# 上下文变量的核心作用 contextvars
+# 1. 它允许你在异步任务或多线程环境中保存与当前执行上下文相关的数据
+# 2. 这些数据不会被其他的线程和协程修改
+# 3. 它类似 threading.local()，但是它不仅支持线程，还支持协程
+#
+#  我们一般使用 ContextVar.set([default]) 和 ContextVar.get([default]) 来设置和获取对应的上下文变量
+
+
 _request_id: ContextVar[str | None] = ContextVar("request_id", default=None)
 _user_id: ContextVar[int | None] = ContextVar("user_id", default=None)
 _client_ip: ContextVar[str | None] = ContextVar("client_ip", default=None)

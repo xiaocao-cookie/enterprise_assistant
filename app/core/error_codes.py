@@ -1,7 +1,11 @@
 from __future__ import annotations
 
-# todo: 文档补充
+
 ERROR_MESSAGES: dict[str, str] = {
+    """
+    错误信息，或者叫做异常的说明 
+     
+    """
     # 异常
     "error.validation_failed": "validation_failed",
     "error.internal": "internal_error",
@@ -33,6 +37,10 @@ ERROR_MESSAGES: dict[str, str] = {
 
 
 ERROR_STATUS: dict[str, int] = {
+    """
+        错误编码/异常编码
+    
+    """
     # 异常
     "error.validation_failed": 422,
     "error.internal": 500,
