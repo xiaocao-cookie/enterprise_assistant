@@ -29,7 +29,7 @@ class RefreshReq(BaseModel):
 
 
 class MeResp(BaseModel):
-    """ 个人主页的响应体模型 """
+    """ 个人信息的响应体模型 """
     id: int
     email: EmailStr
     is_active: bool

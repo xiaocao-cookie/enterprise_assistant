@@ -17,6 +17,13 @@ RL_REDIS_KEY_PREFIX = "rl"
 
 @dataclass(frozen=True)
 class RateLimitSpec:
+    """
+    限流规则的配置类
+
+    :param name: 限流的规则名
+    :param limit: 在指定的时间窗口内允许的最大请求次数
+    :param window_seconds: 限流窗口的长度（秒）
+    """
     name: str
     limit: int
     window_seconds: int
@@ -29,15 +36,15 @@ def _key_fixed_window(
         now_ts: int
 ) -> str:
     """
+    根据固定时间窗口算法生成 Redis 的限流键
 
-
-    :param prefix:
-    :param identifier:
-    :param window_seconds:
-    :param now_ts:
-    :return:
+    :param prefix: 限流类型的前缀，一般使用限流规则名
+    :param identifier: 资源标识符（例如 IP，用户 ID等）
+    :param window_seconds: 限流窗口的大小
+    :param now_ts: 当前的时间戳
+    :return: 用于 Redis 的键
     """
-    bucket = now_ts // window_seconds
+    bucket = now_ts // window_seconds                                   # 将 now_ts 划分到每个固定的桶中
     return f"{RL_REDIS_KEY_PREFIX}:{prefix}:{identifier}:{bucket}"
 
 
@@ -62,17 +69,23 @@ def _to_int(v: object) -> int | None:
 
 
 def rate_limit_ip(spec: RateLimitSpec) -> Callable:
+    """
+    创建基于 IP 限流的依赖函数
+
+    :param spec: RateLimitSpec 对象，包含限流名称，次数上限和窗口长度
+    :return: Callable
+    """
     async def _dep(request: Request, redis=Depends(get_redis)):
         ip = get_real_ip(request) or "unknown"
         now = int(time.time())
         k = _key_fixed_window(spec.name, ip, int(spec.window_seconds), now)
 
-        n_raw = await redis.incr(k)
+        n_raw = await redis.incr(k)                     # 若 k 不存在，则 n_raw = 1
         n = _to_int(n_raw)
         if n is None:
             raise_err("error.internal", meta={"where": "rate_limit", "reason": "bad_redis_incr"})
 
-        if n == 1:
+        if n == 1:                      # 设置第一次请求的 TTL
             ttl = int(spec.window_seconds)
             if ttl <= 0:
                 raise_err("error.internal", meta={"where": "rate_limit", "reason": "bad_window_seconds"})
@@ -84,7 +97,7 @@ def rate_limit_ip(spec: RateLimitSpec) -> Callable:
                 except RedisError:
                     raise_err("error.internal", meta={"where": "rate_limit", "reason": "redis_expire_failed"})
 
-        if n > int(spec.limit):
+        if n > int(spec.limit):         # 后面的请求如果大于最大限制，则触发异常和审计
             record(
                 action="http.rate_limited",
                 status="deny",

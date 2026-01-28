@@ -144,10 +144,10 @@ async def get_tokenver(redis, user_id: int) -> int:
         return 0
 
 
-# todo: 这个函数在哪用的
 async def bump_tokenver(redis, user_id: int) -> int:
     """
-    使 redis 中的 tokenver(使用 user_id 封装) 自增
+    使 redis 中的 tokenver(使用 user_id 封装) 自增，每次触发 login 时, token_ver 自增
+    第一次登录时，redis.incr(None) 的返回值为 1
 
     :param redis: Redis 客户端
     :param user_id: 用户 ID
@@ -216,7 +216,6 @@ return {user_id, token_ver}
 """
 
 
-# todo: 此函数什么时候用
 async def verify_and_consume_refresh(redis, *, pair: RefreshTokenPair) -> tuple[int, int]:
     """
     使用 redis 运行 lua 脚本，用来验证并消费一个刷新令牌

@@ -12,22 +12,18 @@ class Meta(BaseModel):
 
 
 class ApiResponse(BaseModel, Generic[T]):
-    """ API响应模型 """
+    """ 带范型的 API响应模型 """
     data: T
     meta: Meta | None = None
 
 
 class Empty(BaseModel):
-    """
-    # todo: 这是干啥的
-    """
+    """ 空占位模型，用来适配无需返回业务数据的接口 """
     ok: bool = True
 
 
 class ActionResult(BaseModel):
-    """
-    # todo: 这是干啥的
-    """
+    """ 表示某个操作是否成功 """
     ok: bool = True
 
 
