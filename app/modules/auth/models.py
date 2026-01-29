@@ -118,7 +118,7 @@ class UserRoleGrant(Base):
     id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True, comment="Grant row ID")
     user_id: Mapped[int] = mapped_column(BigInteger, ForeignKey("users.id"), nullable=False, comment="FK -> users.id")
     role_id: Mapped[int] = mapped_column(BigInteger, ForeignKey("roles.id"), nullable=False, comment="FK -> roles.id")
-    scope_key: Mapped[str] = mapped_column(                         # 用户角色的作用范围
+    scope_key: Mapped[str] = mapped_column(                                 # 用户角色作用域的标识符
         String(128),
         nullable=False,
         comment="global | workspace:{id} | project:{id} | resource:{type}:{ref_id}",

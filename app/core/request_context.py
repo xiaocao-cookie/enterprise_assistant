@@ -14,6 +14,7 @@ _request_id: ContextVar[str | None] = ContextVar("request_id", default=None)
 _user_id: ContextVar[int | None] = ContextVar("user_id", default=None)
 _client_ip: ContextVar[str | None] = ContextVar("client_ip", default=None)
 _user_agent: ContextVar[str | None] = ContextVar("user_agent", default=None)
+_workspace_id: ContextVar[int | None] = ContextVar("workspace_id", default=None)
 
 
 def set_request_id(v: str | None) -> None:
@@ -46,3 +47,11 @@ def set_user_agent(v: str | None) -> None:
 
 def get_user_agent() -> str | None:
     return _user_agent.get()
+
+
+def set_workspace_id(v: int | None) -> None:
+    _workspace_id.set(v)
+
+
+def get_workspace_id() -> int | None:
+    return _workspace_id.get()

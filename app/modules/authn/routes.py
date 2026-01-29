@@ -92,7 +92,7 @@ async def register(
     :param db: 数据库的异步 session 客户端，依赖 get_db
     :return: ApiResponse 对象，其中 data 的类型为 MeResp
     """
-    async with db.begin():                  # 开启一个数据库的 transaction(事务)
+    async with db:                  # 开启一个数据库的 transaction(事务)
         exists = (await db.execute(select(User).where(User.email == req.email))).scalar_one_or_none()
         if exists:
             record(
@@ -107,6 +107,7 @@ async def register(
         db.add(user)                                # 将 user 加入 session
         await db.flush()                            # 将 session 中暂存的对象写入数据库
         await db.refresh(user)                      # 自动刷新 user 并同步到数据库，适配多个用户几乎同时注册的场景
+        await db.commit()
 
     record(
         action="auth.register",
