@@ -9,6 +9,7 @@ from sqlalchemy import text
 from app.core.request_context import get_workspace_id
 
 
+# todo：函数文档
 async def get_db(request: Request) -> AsyncGenerator[AsyncSession, None]:
     """
     为每个 request 提供一个异步的 session（此 session 由 SqlAlchemy 提供）
@@ -18,7 +19,7 @@ async def get_db(request: Request) -> AsyncGenerator[AsyncSession, None]:
     """
     session_maker = request.app.state.db_session_maker
 
-    async with session_maker.begin() as session:
+    async with session_maker() as session:
         wid = getattr(request.state, "workspace_id", None)
 
         if wid is None:
@@ -26,7 +27,14 @@ async def get_db(request: Request) -> AsyncGenerator[AsyncSession, None]:
         wid_val = str(int(wid)) if wid else "0"
 
         await session.execute(
-            text("SELECT set_config('app.tenant_id', :v, true)"),
+            text("SELECT set_config('app.tenant_id', :v, false)"),
             {"v": wid_val},
         )
-        yield session
+
+        await session.commit()
+
+        try:
+            yield session
+        finally:
+            if session.in_transaction():
+                await session.rollback()

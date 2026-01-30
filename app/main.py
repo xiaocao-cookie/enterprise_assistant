@@ -22,6 +22,8 @@ from app.infra.elasticsearch_client import create_es_client
 from app.modules.admin.routes import router as admin_router
 from app.modules.authn.routes import router as auth_router
 from app.modules.authz.seed_sync import sync_authz
+from app.infra.qdrant_client import create_qdrant_client
+from app.infra.blob_storage.local_fs import LocalFSStorage
 
 
 @asynccontextmanager
@@ -44,6 +46,8 @@ async def lifespan(application: FastAPI):
     application.state.redis = redis
 
     application.state.es = create_es_client()
+    application.state.qdrant = create_qdrant_client()
+    application.state.storage = LocalFSStorage(root_dir=str(settings.blob_local_root))
 
     await run_startup_checks(application)
 

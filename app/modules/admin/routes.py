@@ -128,9 +128,8 @@ async def grant_role(
             )
         )
 
-        async with db:
+        async with db.begin():
             res = await db.execute(stmt)
-            await db.commit()
 
         rc = int(getattr(res, "rowcount", 0) or 0)
         idempotent = (rc == 0)  # 如果rowcount=0也算幂等，比如说别人并发插入了，最终状态一致
@@ -204,9 +203,8 @@ async def revoke_role(
         UserRoleGrant.scope_key == scope_key,
     )
 
-    async with db:
+    async with db.begin():
         res = await db.execute(stmt)
-        await db.commit()
 
     deleted = int(res.rowcount or 0)
 
