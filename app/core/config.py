@@ -15,8 +15,11 @@ from app.core.security_defaults import (
 class Settings(BaseSettings):
     """ 项目的配置信息 """
     # 基础配置
-    model_config = SettingsConfigDict(env_file="/home/supercao/PycharmProjects/enterprise_assistant/.env",
-                                      env_file_encoding="utf-8")
+    model_config = SettingsConfigDict(
+        env_file="/home/supercao/PycharmProjects/enterprise_assistant/.env",
+        env_file_encoding="utf-8",
+        extra="ignore")
+
     env: Env = Field(default=Env.dev, alias="ENV")
     app_name: str = Field(default="enterprise_assistant", alias="APP_NAME")
     log_level: str = Field(default="INFO", alias="LOG_LEVEL")
@@ -82,6 +85,9 @@ class Settings(BaseSettings):
     qdrant_url: str = Field(default="http://127.0.0.1:6333", alias="QDRANT_URL")
     qdrant_api_key: str | None = Field(default=None, alias="QDRANT_API_KEY")
     qdrant_timeout_seconds: float = Field(default=10.0, alias="QDRANT_TIMEOUT_SECONDS")
+    qdrant_collection: str = Field(default="kb_chunks", alias="QDRANT_COLLECTION")
+
+    embedding_model: str = Field(default="BAAI/bge-small-en-v1.5", alias="EMBEDDING_MODEL")
 
     # Binary Large Object
     blob_backend: str = Field(default="local", alias="BLOB_BACKEND")
@@ -93,6 +99,11 @@ class Settings(BaseSettings):
     blob_s3_access_key_id: str | None = Field(default=None, alias="BLOB_S3_ACCESS_KEY_ID")
     blob_s3_secret_access_key: str | None = Field(default=None, alias="BLOB_S3_SECRET_ACCESS_KEY")
     blob_s3_region: str | None = Field(default=None, alias="BLOB_S3_REGION")
+
+    # Knowledge_base 的配置
+    kb_chunk_max_chars: int = Field(default=1200, alias="KB_CHUNK_MAX_CHARS")
+    kb_chunk_overlap_chars: int = Field(default=120, alias="KB_CHUNK_OVERLAP_CHARS")
+    kb_bm25_max_docs: int = Field(default=2000, alias="KB_BM25_MAX_DOCS")
 
     @model_validator(mode="after")
     def _validate_cors(self) -> "Settings":
@@ -120,6 +131,37 @@ class Settings(BaseSettings):
 
     def cors_headers_list(self) -> list[str]:
         return self._csv(self.cors_allow_headers) or ["*"]
+
+    @model_validator(mode="after")
+    def _validate_blob_backend(self) -> "Settings":
+        backend = (self.blob_backend or "").strip().lower()
+        if backend not in {"local", "s3"}:
+            raise ValueError("BLOB_BACKEND must be either 'local' or 's3'.")
+        if backend == "s3":
+            missing = []
+            if not self.blob_s3_bucket:
+                missing.append("BLOB_S3_BUCKET")
+            if not self.blob_s3_access_key_id:
+                missing.append("BLOB_S3_ACCESS_KEY_ID")
+            if not self.blob_s3_secret_access_key:
+                missing.append("BLOB_S3_SECRET_ACCESS_KEY")
+            if missing:
+                raise ValueError(f"S3 blob backend enabled but missing required settings: {', '.join(missing)}")
+        return self
+
+    @model_validator(mode="after")
+    def _validate_kb_chunking(self) -> "Settings":
+        if self.kb_chunk_max_chars <= 0:
+            raise ValueError("KB_CHUNK_MAX_CHARS must be > 0.")
+        if self.kb_chunk_overlap_chars < 0:
+            raise ValueError("KB_CHUNK_OVERLAP_CHARS must be >= 0.")
+        if self.kb_chunk_overlap_chars >= self.kb_chunk_max_chars:
+            raise ValueError("KB_CHUNK_OVERLAP_CHARS must be smaller than KB_CHUNK_MAX_CHARS.")
+        if self.kb_bm25_max_docs <= 0:
+            raise ValueError("KB_BM25_MAX_DOCS must be > 0.")
+        if self.qdrant_timeout_seconds <= 0:
+            raise ValueError("QDRANT_TIMEOUT_SECONDS must be > 0.")
+        return self
 
 
 settings = Settings()

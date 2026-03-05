@@ -53,8 +53,15 @@ async def readyz(request: Request):
     except Exception:
         es_ok = False
 
-    ok_all = bool(db_ok and redis_ok and es_ok)
-    return ok({"ok": ok_all, "deps": {"db": db_ok, "redis": redis_ok, "es": es_ok}})
+    try:
+        q = request.app.state.qdrant
+        q.get_collections()
+        qdrant_ok = True
+    except Exception:
+        qdrant_ok = False
+
+    ok_all = bool(db_ok and redis_ok and es_ok and qdrant_ok)
+    return ok({"ok": ok_all, "deps": {"db": db_ok, "redis": redis_ok, "es": es_ok, "qdrant": qdrant_ok}})
 
 
 @router.get("/version", response_model=ApiResponse[dict])

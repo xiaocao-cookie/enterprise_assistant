@@ -32,7 +32,21 @@ ERROR_MESSAGES: dict[str, str] = {
     "admin.user_not_found": "user not found",
 
     # 存储
-    "storage.db_error": "db_error"
+    "storage.db_error": "db_error",
+
+    # 资源
+    "resources.workspace_not_found": "workspace not found",
+    "resources.project_not_found": "project not found",
+    "resources.workspace_name_taken": "workspace name already exists",
+    "resources.project_name_taken": "project name already exists in workspace",
+
+    # 知识库
+    "kb.asset_not_found": "kb asset not found",
+    "kb.asset_not_uploaded": "kb asset not uploaded",
+    "kb.asset_bad_resource_type": "bad resource_type",
+    "kb.ingest_unsupported": "unsupported asset type",
+    "kb.ingest_failed": "ingest failed",
+    "kb.search_failed": "search failed",
 }
 
 
@@ -67,5 +81,19 @@ ERROR_STATUS: dict[str, int] = {
     "admin.user_not_found": 404,
 
     # 存储
-    "storage.db_error": 500
+    "storage.db_error": 500,
+
+    # 资源
+    "resources.workspace_not_found": 404,
+    "resources.project_not_found": 404,
+    "resources.workspace_name_taken": 409,
+    "resources.project_name_taken": 409,
+
+    # 知识库
+    "kb.asset_not_found": 404,
+    "kb.asset_not_uploaded": 409,
+    "kb.asset_bad_resource_type": 400,
+    "kb.ingest_unsupported": 400,
+    "kb.ingest_failed": 500,
+    "kb.search_failed": 500,
 }

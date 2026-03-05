@@ -23,6 +23,7 @@ async def run_startup_checks(app) -> None:
         1. JWT 私钥的强度与合法性
         2. 跨域请求的合法性
         3. redis, db 和 es 服务运行是否正常
+        4. Qdrant 是否正常运行
 
     :param app: FastAPI 的应用
     """
@@ -51,3 +52,8 @@ async def run_startup_checks(app) -> None:
     ok = await app.state.es.ping()
     if not ok:
         raise RuntimeError("elasticsearch_ping_failed")
+
+    try:
+        app.state.qdrant.get_collections()
+    except Exception as e:
+        raise RuntimeError("qdrant_ping_failed") from e

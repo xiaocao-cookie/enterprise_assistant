@@ -5,16 +5,17 @@ from typing import Protocol
 
 
 @dataclass(frozen=True)
-class StoredObject:
+class BlobObject:
     key: str
-    size: int
-    content_type: str | None = None
-    etag: str | None = None
+    size_bytes: int
 
 
-# todo: Protocol 是什么
 class StorageBackend(Protocol):
-    async def put_bytes(self, *, key: str, data: bytes, content_type: str | None = None) -> StoredObject: ...
+    """
+    继承 Protocol 的类通常用来静态检查类型
+    即： 实现了以下四个方法的都被认定为 StorageBackend 这个类
+    """
+    async def put_bytes(self, *, key: str, data: bytes, content_type: str | None = None) -> BlobObject: ...
     async def get_bytes(self, *, key: str) -> bytes: ...
     async def exists(self, *, key: str) -> bool: ...
     async def delete(self, *, key: str) -> None: ...

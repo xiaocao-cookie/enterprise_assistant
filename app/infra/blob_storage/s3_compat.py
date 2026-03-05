@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from app.infra.blob_storage.interface import StorageBackend, StoredObject
+from app.infra.blob_storage.interface import StorageBackend, BlobObject
 
 
 # todo: 文件的第三方存储
@@ -14,7 +14,7 @@ class S3CompatStorage(StorageBackend):
     secret_access_key: str
     region: str | None = None
 
-    async def put_bytes(self, *, key: str, data: bytes, content_type: str | None = None) -> StoredObject:
+    async def put_bytes(self, *, key: str, data: bytes, content_type: str | None = None) -> BlobObject:
         raise NotImplementedError("s3_storage_not_configured")
 
     async def get_bytes(self, *, key: str) -> bytes:

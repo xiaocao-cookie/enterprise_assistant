@@ -9,7 +9,7 @@ celery_app = Celery(
     broker=settings.rabbitmq_url,
     backend=settings.celery_result_backend,
     include=[
-        "app.workers.tasks.kb_ingest",
+        "app.modules.kb.tasks",
     ],
 )
 
