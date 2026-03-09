@@ -5,6 +5,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from redis.asyncio import Redis
 import uvicorn
+from fastembed import TextEmbedding
 
 from app.api.exception_handlers import install_exception_handlers
 from app.api.health import router as health_router
@@ -19,12 +20,13 @@ from app.core.logging_setup import setup_logging
 from app.infra.db.engine import create_engine
 from app.infra.db.session import create_session_maker
 from app.infra.elasticsearch_client import create_es_client
+from app.infra.qdrant_client import create_qdrant_client, ensure_collection
+from app.infra.blob_storage.local_fs import LocalFsStorage
 from app.modules.admin.routes import router as admin_router
 from app.modules.authn.routes import router as auth_router
 from app.modules.authz.seed_sync import sync_authz
-from app.infra.qdrant_client import create_qdrant_client
-from app.infra.blob_storage.local_fs import LocalFSStorage
-
+from app.modules.resources.routes import router as resources_router
+from app.modules.kb.routes import router as kb_router
 
 @asynccontextmanager
 async def lifespan(application: FastAPI):
@@ -46,8 +48,19 @@ async def lifespan(application: FastAPI):
     application.state.redis = redis
 
     application.state.es = create_es_client()
-    application.state.qdrant = create_qdrant_client()
-    application.state.storage = LocalFSStorage(root_dir=str(settings.blob_local_root))
+    qdrant = create_qdrant_client()
+    application.state.qdrant = qdrant
+    application.state.storage = LocalFsStorage(root_dir=str(settings.blob_local_root))
+
+    embedder = TextEmbedding(model_name=str(settings.embedding_model))
+    dim = len(list(embedder.embed(["dim"]))[0])
+    ensure_collection(qdrant, collection=str(settings.qdrant_collection), vector_size=int(dim))
+
+    try:
+        from app.modules.rag.dense_qdrant import ensure_payload_schema
+        ensure_payload_schema(qdrant, collection=str(settings.qdrant_collection))
+    except Exception:
+        pass
 
     await run_startup_checks(application)
 
@@ -98,6 +111,8 @@ if settings.security_headers_enabled:
 app.include_router(health_router)
 app.include_router(auth_router)
 app.include_router(admin_router)
+app.include_router(resources_router)
+app.include_router(kb_router)
 
 install_openapi(app)
 
